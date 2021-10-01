@@ -51,7 +51,7 @@ class DetailVC: UIViewController {
     
     let verifyEmailView : UIView = {
         let v = UIView()
-        v.backgroundColor = .blue//UIColor(white: 255, alpha: 0.8)
+        v.backgroundColor = .systemPink
         v.translatesAutoresizingMaskIntoConstraints = false
         v.layer.cornerRadius = 15
         return v
@@ -59,11 +59,11 @@ class DetailVC: UIViewController {
     
     let imgViewEmail : UIImageView = {
         let imgView = UIImageView()
-        imgView.backgroundColor = .white
-        imgView.layer.cornerRadius = 15
-        imgView.clipsToBounds = false
+        imgView.layer.cornerRadius  = 15
+        imgView.clipsToBounds       = false
         
-        imgView.image = UIImage(systemName: "house")
+        imgView.image = UIImage(systemName: "antenna.radiowaves.left.and.right.circle.fill")
+        imgView.tintColor = .black
         imgView.translatesAutoresizingMaskIntoConstraints = false
         return imgView
     }()
@@ -88,10 +88,8 @@ class DetailVC: UIViewController {
     
     let btnEmailClose : UIButton = {
         let btn = UIButton()
-        btn.setImage(UIImage(systemName: "close"), for: .normal)
-//        btn.backgroundColor = .red
-        btn.setTitle(" X ", for: .normal)
-        btn.tintColor = .red
+        btn.setImage(UIImage(systemName: "xmark"), for: .normal)
+        btn.tintColor = .black
         btn.setTitleColor(.red, for: .normal)
         btn.translatesAutoresizingMaskIntoConstraints = false
         return btn
@@ -100,7 +98,7 @@ class DetailVC: UIViewController {
     
     let tableView : UITableView = {
         let t = UITableView()
-        t.backgroundColor = .blue
+        t.backgroundColor = .systemPink
         t.translatesAutoresizingMaskIntoConstraints = false
         t.layer.cornerRadius = 15
         return t
@@ -139,6 +137,11 @@ extension DetailVC : UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ProfileCell") as! ProfileCell
         
+        cell.didTapPreviewImageCompletion = {
+            let vc = PreviewPhotoVC()
+            
+            self.present(vc, animated: true) {}
+        }
         return cell
     }
     
@@ -148,6 +151,7 @@ extension DetailVC : UITableViewDelegate, UITableViewDataSource {
 }
 
 extension DetailVC {
+    
     private
     func addImageView() {
         self.view.addSubview(containerView)
@@ -295,9 +299,11 @@ extension DetailVC {
 }
 
 class ProfileCell : UITableViewCell {
+    
     let imgViewIcon : UIImageView = {
         let img = UIImageView()
-        img.backgroundColor     = UIColor.white
+        img.image = UIImage(systemName: "person.fill")
+        img.tintColor           = .black
         img.layer.cornerRadius  = 4
         img.clipsToBounds       = false
         img.translatesAutoresizingMaskIntoConstraints = false
@@ -313,26 +319,51 @@ class ProfileCell : UITableViewCell {
         return lbl
     }()
     
+    let btnMore : UIButton = {
+        let btn = UIButton()
+        btn.tintColor = .black
+        btn.setImage(UIImage(systemName: "ellipsis.circle.fill"), for: .normal)
+        btn.translatesAutoresizingMaskIntoConstraints = false
+        return btn
+    }()
+    
     let photoImgView : UIImageView = {
        let imgView = UIImageView()
-        imgView.backgroundColor = .white
+        imgView.backgroundColor     = .white
+        imgView.layer.cornerRadius  = 15
+        imgView.clipsToBounds       = false
         imgView.translatesAutoresizingMaskIntoConstraints = false
+        
+        imgView.isUserInteractionEnabled = true
+        
         return imgView
     }()
+    
+    var didTapPreviewImageCompletion : () -> () = {}
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         contentView.backgroundColor = .systemPink
         self.addIconImgView()
         self.addLblTitle()
+        self.addBtnMore()
         self.addPhotoImgView()
+        
+        photoImgView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(openPhoto)))
+        
+        photoImgView.addInteraction(UIContextMenuInteraction(delegate: self))
     }
 
+    @objc func openPhoto() {
+        print("Meow Meow")
+        self.photoImgView.animateCurveOutIn(withDuration: 1, delay: 0.2) {
+            self.didTapPreviewImageCompletion()
+        }
+    }
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         fatalError("init(coder:) has not been implemented")
-        
     }
     
     func addIconImgView() {
@@ -363,6 +394,20 @@ class ProfileCell : UITableViewCell {
         contentView.addConstraints(hCstlLblTitle)
     }
     
+    func addBtnMore() {
+        contentView.addSubview(btnMore)
+        
+        let vflLblTitle = "V:|-21-[btnMore(24)]"
+        let hflLblTitle = "H:[lblTitle]-15-[btnMore(24)]-24-|"
+        
+        let dic = ["btnMore": btnMore, "lblTitle": lblTitle]
+        let vCstlLblTitle = NSLayoutConstraint.constraints(withVisualFormat: vflLblTitle, options: [], metrics: nil, views: dic)
+        let hCstlLblTitle = NSLayoutConstraint.constraints(withVisualFormat: hflLblTitle, options: [], metrics: nil, views: dic)
+        
+        contentView.addConstraints(vCstlLblTitle)
+        contentView.addConstraints(hCstlLblTitle)
+    }
+    
     func addPhotoImgView() {
         contentView.addSubview(photoImgView)
         
@@ -376,4 +421,31 @@ class ProfileCell : UITableViewCell {
         contentView.addConstraints(vCstPhotoImgView)
         contentView.addConstraints(hCstPhotoImgView)
     }
+}
+
+extension ProfileCell : UIContextMenuInteractionDelegate {
+    
+    func contextMenuInteraction(_ interaction: UIContextMenuInteraction, configurationForMenuAtLocation location: CGPoint) -> UIContextMenuConfiguration? {
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { suggestedActions in
+            
+            // Create an action for sharing
+            let share = UIAction(title: "Share", image: UIImage(systemName: "square.and.arrow.up")) { action in
+                // Show system share sheet
+            }
+
+            // Create an action for renaming
+            let rename = UIAction(title: "Rename", image: UIImage(systemName: "square.and.pencil")) { action in
+                // Perform renaming
+            }
+
+            // Here we specify the "destructive" attribute to show that it’s destructive in nature
+            let delete = UIAction(title: "Delete", image: UIImage(systemName: "trash"), attributes: .destructive) { action in
+                // Perform delete
+            }
+
+            // Create and return a UIMenu with all of the actions as children
+            return UIMenu(title: "", children: [share, rename, delete])
+        }
+    }
+    
 }
